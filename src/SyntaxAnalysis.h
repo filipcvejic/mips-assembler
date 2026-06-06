@@ -2,9 +2,14 @@
 
 #include "LexicalAnalysis.h"
 #include "Token.h"
+#include "IR.h"
+
+#include <map>
+#include <vector>
+#include <string>
 
 /**
- * Sintaksna analiza MAVN jezika (rekurzivni spust).
+ * Sintaksna analiza MAVN jezika (rekurzivni spust) + izgradnja IR-a.
  *
  * Gramatika:
  *   Q -> S ; L
@@ -30,32 +35,43 @@ public:
 	SyntaxAnalysis(LexicalAnalysis& lex);
 
 	/**
-	 * Pokrece sintaksnu analizu.
+	 * Pokrece sintaksnu analizu i (uz uspeh) gradi IR.
 	 * @return true ako nema sintaksnih gresaka, false inace.
 	 */
 	bool Do();
 
+	/* --- Pristup izgradjenom IR-u (za naredne faze) --- */
+	Instructions& getInstructions()                         { return instructions; }
+	Variables& getMemoryVariables()                         { return memoryVariables; }
+	std::map<std::string, Variable*>& getRegVariables()     { return regVariables; }
+	std::map<std::string, Instruction*>& getLabels()        { return labels; }
+	std::string getFunctionName() const                     { return functionName; }
+
+	/**
+	 * Ispisuje izgradjeni IR (za proveru/debug).
+	 */
+	void printIR();
+
 private:
-	/**
-	 * Ispisuje sintaksnu gresku i token koji ju je izazvao.
-	 */
+	/* --- Parser --- */
 	void printSyntaxError(Token token);
-
-	/**
-	 * "Pojede" tekuci token ako je ocekivanog tipa t, inace prijavljuje gresku.
-	 */
 	void eat(TokenType t);
-
-	/**
-	 * Vraca sledeci token iz liste (preskace komentare).
-	 */
 	Token getNextToken();
 
-	/* Neterminali gramatike */
 	void Q();
 	void S();
 	void L();
 	void E();
+
+	/* --- Izgradnja IR-a --- */
+	/** Vraca (ili kreira ako ne postoji) registarsku promenljivu po imenu. */
+	Variable* getOrCreateReg(const std::string& name);
+	/** Dodaje memorijsku promenljivu (_mem) sa pocetnom vrednoscu. */
+	void addMemoryVariable(const std::string& name, int value);
+	/** Kreira instrukciju i puni dst/src (=def/use) iz imena registara. */
+	void emit(InstructionType type, const std::string& asmTemplate,
+	          const std::vector<std::string>& dstNames,
+	          const std::vector<std::string>& srcNames);
 
 	/** Referenca na modul leksicke analize. */
 	LexicalAnalysis& lexicalAnalysis;
@@ -68,4 +84,12 @@ private:
 
 	/** Token koji se trenutno analizira. */
 	Token currentToken;
+
+	/* --- IR --- */
+	Instructions instructions;                          ///< lista instrukcija (redosled = tok programa)
+	std::map<std::string, Variable*> regVariables;      ///< registarske promenljive po imenu (deljeni pokazivaci)
+	Variables memoryVariables;                          ///< memorijske promenljive (_mem) za .data
+	std::map<std::string, Instruction*> labels;         ///< labela -> instrukcija na koju pokazuje
+	std::string functionName;                           ///< ime funkcije (_func) za .globl i labelu
+	std::string pendingLabel;                           ///< labela koja ceka da se zakaci na sledecu instrukciju
 };

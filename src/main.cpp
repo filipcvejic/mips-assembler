@@ -38,6 +38,9 @@ int main(int argc, char* argv[])
 			throw runtime_error("\nException! Syntax analysis failed!\n");
 
 		cout << "Syntax analysis finished successfully!" << endl;
+
+		// Ispis izgradjenog IR-a (provera).
+		syntax.printIR();
 	}
 	catch (runtime_error& e)
 	{

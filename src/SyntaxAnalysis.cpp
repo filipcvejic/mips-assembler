@@ -1,6 +1,7 @@
 #include "SyntaxAnalysis.h"
 
 #include <iostream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -71,6 +72,66 @@ void SyntaxAnalysis::eat(TokenType t)
 }
 
 
+/* ===================== Izgradnja IR-a ===================== */
+
+Variable* SyntaxAnalysis::getOrCreateReg(const std::string& name)
+{
+	map<string, Variable*>::iterator it = regVariables.find(name);
+	if (it != regVariables.end())
+		return it->second;
+
+	// pozicija = redni broj promenljive (indeks u matrici smetnji, kasnije)
+	Variable* v = new Variable(Variable::REG_VAR, name, (int)regVariables.size());
+	regVariables[name] = v;
+	return v;
+}
+
+
+void SyntaxAnalysis::addMemoryVariable(const std::string& name, int value)
+{
+	Variable* v = new Variable(Variable::MEM_VAR, name, -1, value);
+	memoryVariables.push_back(v);
+}
+
+
+void SyntaxAnalysis::emit(InstructionType type, const std::string& asmTemplate,
+                          const std::vector<std::string>& dstNames,
+                          const std::vector<std::string>& srcNames)
+{
+	if (errorFound)
+		return;
+
+	Instruction* instr = new Instruction((int)instructions.size() + 1, type, asmTemplate);
+
+	// dst registri (ujedno def skup za liveness)
+	for (size_t i = 0; i < dstNames.size(); i++)
+	{
+		Variable* v = getOrCreateReg(dstNames[i]);
+		instr->getDst().push_back(v);
+		instr->getDef().push_back(v);
+	}
+
+	// src registri (ujedno use skup za liveness)
+	for (size_t i = 0; i < srcNames.size(); i++)
+	{
+		Variable* v = getOrCreateReg(srcNames[i]);
+		instr->getSrc().push_back(v);
+		instr->getUse().push_back(v);
+	}
+
+	// labela koja je prethodila ovoj instrukciji (S -> id : E)
+	if (!pendingLabel.empty())
+	{
+		labels[pendingLabel] = instr;
+		pendingLabel.clear();
+	}
+
+	instructions.push_back(instr);
+}
+
+
+/* ===================== Gramatika ===================== */
+
 // Q -> S ; L
 void SyntaxAnalysis::Q()
 {
@@ -107,26 +168,42 @@ void SyntaxAnalysis::S()
 	switch (currentToken.getType())
 	{
 	case T_MEM:		// _mem mid num
+	{
 		eat(T_MEM);
-		eat(T_M_ID);
-		eat(T_NUM);
+		string memName = currentToken.getValue(); eat(T_M_ID);
+		string memVal  = currentToken.getValue(); eat(T_NUM);
+		if (!errorFound)
+			addMemoryVariable(memName, atoi(memVal.c_str()));
 		break;
+	}
 
 	case T_REG:		// _reg rid
+	{
 		eat(T_REG);
-		eat(T_R_ID);
+		string regName = currentToken.getValue(); eat(T_R_ID);
+		if (!errorFound)
+			getOrCreateReg(regName);	// deklaracija registarske promenljive
 		break;
+	}
 
 	case T_FUNC:	// _func id
+	{
 		eat(T_FUNC);
-		eat(T_ID);
+		string fName = currentToken.getValue(); eat(T_ID);
+		if (!errorFound)
+			functionName = fName;
 		break;
+	}
 
 	case T_ID:		// id : E  (labela ispred instrukcije)
-		eat(T_ID);
+	{
+		string lbl = currentToken.getValue(); eat(T_ID);
 		eat(T_COL);
+		if (!errorFound)
+			pendingLabel = lbl;
 		E();
 		break;
+	}
 
 	default:		// S -> E  (instrukcija)
 		E();
@@ -144,65 +221,97 @@ void SyntaxAnalysis::E()
 	switch (currentToken.getType())
 	{
 	case T_ADD:		// add rid , rid , rid
+	{
 		eat(T_ADD);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_R_ID);
+		string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s2 = currentToken.getValue(); eat(T_R_ID);
+		emit(I_ADD, "add `d, `s, `s", { d }, { s1, s2 });
 		break;
+	}
 
 	case T_ADDI:	// addi rid , rid , num
+	{
 		eat(T_ADDI);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_NUM);
+		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string imm = currentToken.getValue(); eat(T_NUM);
+		emit(I_ADDI, "addi `d, `s, " + imm, { d }, { s });
 		break;
+	}
 
 	case T_SUB:		// sub rid , rid , rid
+	{
 		eat(T_SUB);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_R_ID);
+		string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s2 = currentToken.getValue(); eat(T_R_ID);
+		emit(I_SUB, "sub `d, `s, `s", { d }, { s1, s2 });
 		break;
+	}
 
 	case T_LA:		// la rid , mid
+	{
 		eat(T_LA);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_M_ID);
+		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string mid = currentToken.getValue(); eat(T_M_ID);
+		emit(I_LA, "la `d, " + mid, { d }, { });
 		break;
+	}
 
 	case T_LW:		// lw rid , num ( rid )
+	{
 		eat(T_LW);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_NUM);
-		eat(T_L_PARENT); eat(T_R_ID); eat(T_R_PARENT);
+		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string off = currentToken.getValue(); eat(T_NUM);
+		eat(T_L_PARENT);
+		string base = currentToken.getValue(); eat(T_R_ID);
+		eat(T_R_PARENT);
+		emit(I_LW, "lw `d, " + off + "(`s)", { d }, { base });
 		break;
+	}
 
 	case T_LI:		// li rid , num
+	{
 		eat(T_LI);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_NUM);
+		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string imm = currentToken.getValue(); eat(T_NUM);
+		emit(I_LI, "li `d, " + imm, { d }, { });
 		break;
+	}
 
 	case T_SW:		// sw rid , num ( rid )
+	{
 		eat(T_SW);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_NUM);
-		eat(T_L_PARENT); eat(T_R_ID); eat(T_R_PARENT);
+		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string off = currentToken.getValue(); eat(T_NUM);
+		eat(T_L_PARENT);
+		string base = currentToken.getValue(); eat(T_R_ID);
+		eat(T_R_PARENT);
+		emit(I_SW, "sw `s, " + off + "(`s)", { }, { s, base });
 		break;
+	}
 
 	case T_B:		// b id
+	{
 		eat(T_B);
-		eat(T_ID);
+		string lbl = currentToken.getValue(); eat(T_ID);
+		emit(I_B, "b " + lbl, { }, { });
 		break;
+	}
 
 	case T_BLTZ:	// bltz rid , id
+	{
 		eat(T_BLTZ);
-		eat(T_R_ID); eat(T_COMMA);
-		eat(T_ID);
+		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string lbl = currentToken.getValue(); eat(T_ID);
+		emit(I_BLTZ, "bltz `s, " + lbl, { }, { s });
 		break;
+	}
 
 	case T_NOP:		// nop
 		eat(T_NOP);
+		emit(I_NOP, "nop", { }, { });
 		break;
 
 	default:
@@ -210,4 +319,38 @@ void SyntaxAnalysis::E()
 		errorFound = true;
 		break;
 	}
+}
+
+
+/* ===================== Ispis IR-a ===================== */
+
+void SyntaxAnalysis::printIR()
+{
+	cout << "\n================== IR (intermediate representation) ==================" << endl;
+	cout << "Funkcija (.globl): " << (functionName.empty() ? "(nema)" : functionName) << endl;
+
+	cout << "Memorijske promenljive (.data): ";
+	for (Variables::iterator it = memoryVariables.begin(); it != memoryVariables.end(); it++)
+	{
+		printVariable(*it);
+		cout << "  ";
+	}
+	cout << endl;
+
+	cout << "Registarske promenljive: ";
+	for (map<string, Variable*>::iterator it = regVariables.begin(); it != regVariables.end(); it++)
+		cout << it->first << " ";
+	cout << endl;
+
+	cout << "Instrukcije:" << endl;
+	printInstructions(instructions);
+
+	if (!labels.empty())
+	{
+		cout << "Labele: ";
+		for (map<string, Instruction*>::iterator it = labels.begin(); it != labels.end(); it++)
+			cout << it->first << " -> [" << it->second->getPosition() << "]  ";
+		cout << endl;
+	}
+	cout << "======================================================================" << endl;
 }
