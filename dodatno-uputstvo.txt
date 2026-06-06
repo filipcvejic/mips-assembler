@@ -1,0 +1,46 @@
+Projektni zadatak – MAVN prevodilac
+Rok za predaju
+Projekat je potrebno predati najkasnije do termina definisanog za svaku grupu pojedinačno (u okviru dodeljenog Assignment-a).
+
+Opis zadatka
+U okviru projektnog zadatka potrebno je realizovati MAVN prevodilac koji prevodi programe napisane na višem MIPS 32-bit asemblerskom jeziku (MAVN) na osnovni MIPS 32-bit asemblerski jezik.
+
+Prevodilac mora da:
+
+izvrši leksičku i sintaksnu analizu ulaznog programa,
+detektuje i prijavi leksičke i sintaksne greške,
+izvrši analizu životnog veka promenljivih,
+formira graf smetnji,
+izvrši alokaciju registara korišćenjem najviše 4 registra (t0, t1, t2 i t3),
+generiše ispravan MIPS 32-bit asemblerski kod,
+kreira izlaznu datoteku sa ekstenzijom .s.
+Pored instrukcija definisanih u postavci projekta, potrebno je implementirati najmanje tri dodatne MIPS instrukcije, pri čemu najmanje jedna mora biti van aritmetičko-logičke grupe instrukcija.
+
+Obavezni sadržaj predaje
+Studenti predaju:
+
+Kompletan izvorni kod projekta.
+Dokumentaciju projekta u PDF formatu koja sadrži:
+Analizu problema
+Koncept rešenja
+Opis implementacije
+Verifikaciju i testiranje rešenja
+Kratko uputstvo za pokretanje projekta.
+Test primere korišćene za proveru rada prevodioca.
+Format predaje
+Predaja se vrši kao jedna ZIP arhiva koja sadrži:
+
+kompletan projekat,
+dokumentaciju.
+Naziv ZIP arhive:
+Prezime_Ime_BrojIndeksa.zip
+
+Primer:
+Petrovic_Petar_RA123_2022.zip
+
+Napomene
+Rešenje mora samostalno da se kompajlira i pokrene.
+Nepotpune predaje mogu biti umanjene ili odbijene tokom ocenjivanja.
+Projekat bez uspešne odbrane nosi 0 poena.
+Tokom odbrane student treba da objasni implementaciju svih ključnih komponenti sistema (sintaksna analiza, analiza životnog veka, graf smetnji, alokacija registara i generisanje koda).
+Srećan rad!
