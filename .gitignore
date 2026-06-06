@@ -2,6 +2,9 @@
 *.o
 /mavn
 
+# Generisani MIPS izlaz prevodioca
+*.s
+
 # Visual Studio build izlaz / korisnicki fajlovi
 [Dd]ebug/
 [Rr]elease/

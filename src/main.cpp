@@ -6,6 +6,8 @@
 #include "ResourceAllocation.h"
 
 #include <stack>
+#include <fstream>
+#include <map>
 
 #include <iostream>
 #include <string>
@@ -80,6 +82,48 @@ int main(int argc, char* argv[])
 			for (Variables::iterator v = regVars.begin(); v != regVars.end(); v++)
 				std::cout << "  " << (*v)->getName() << " -> $t" << ((*v)->getAssignment() - t0) << std::endl;
 			delete simplificationStack;
+
+			// --- Generisanje MIPS koda (.s) ---
+			// Izlazno ime: ulazna datoteka sa ekstenzijom .s
+			std::string outputFileName = inputFileName;
+			size_t dot = outputFileName.find_last_of('.');
+			if (dot != std::string::npos)
+				outputFileName = outputFileName.substr(0, dot);
+			outputFileName += ".s";
+
+			std::string fn = syntax.getFunctionName();
+
+			// Obrnuta mapa: instrukcija -> labela koja pokazuje na nju.
+			std::map<Instruction*, std::string> labelOf;
+			std::map<std::string, Instruction*>& labels = syntax.getLabels();
+			for (std::map<std::string, Instruction*>::iterator it = labels.begin(); it != labels.end(); it++)
+				labelOf[it->second] = it->first;
+
+			std::ofstream out(outputFileName.c_str());
+
+			if (!fn.empty())
+				out << ".globl " << fn << "\n";
+
+			out << "\n.data\n";
+			Variables& memVars = syntax.getMemoryVariables();
+			for (Variables::iterator m = memVars.begin(); m != memVars.end(); m++)
+				out << (*m)->getName() << ":\t.word " << (*m)->getValue() << "\n";
+
+			out << "\n.text\n";
+			if (!fn.empty())
+				out << fn << ":\n";
+
+			Instructions& instrs = syntax.getInstructions();
+			for (Instructions::iterator it = instrs.begin(); it != instrs.end(); it++)
+			{
+				std::map<Instruction*, std::string>::iterator l = labelOf.find(*it);
+				if (l != labelOf.end())
+					out << l->second << ":\n";
+				out << "\t" << (*it)->toString() << "\n";
+			}
+
+			out.close();
+			std::cout << "MIPS izlaz generisan: " << outputFileName << std::endl;
 		}
 
 		freeInterferenceGraph(ig);

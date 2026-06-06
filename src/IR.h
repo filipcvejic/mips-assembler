@@ -66,6 +66,9 @@ public:
 	std::string getAsmString() const { return m_asmString; }
 	void setAsmString(const std::string& s) { m_asmString = s; }
 
+	/* Popunjava `d/`s sablon stvarnim registrima iz dst/src (po uzoru na vezbu 8). */
+	std::string toString();
+
 	Variables& getDst() { return m_dst; }
 	Variables& getSrc() { return m_src; }
 	Variables& getUse() { return m_use; }

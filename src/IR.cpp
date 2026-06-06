@@ -1,8 +1,38 @@
 #include "IR.h"
 
 #include <iostream>
+#include <string>
 
 using namespace std;
+
+
+/* Naziv stvarnog MIPS registra za dodeljenu boju (t0..t3). */
+static string getRegName(Variable* v)
+{
+	return "$t" + to_string((int)v->getAssignment() - (int)t0);
+}
+
+
+/* Popunjava sablon instrukcije: `d -> dst registri redom, `s -> src registri redom.
+   Po uzoru na vezbu 8 (Instruction.cpp / format). */
+string Instruction::toString()
+{
+	string result;
+	Variables::iterator di = m_dst.begin();
+	Variables::iterator si = m_src.begin();
+
+	for (size_t i = 0; i < m_asmString.size(); i++)
+	{
+		if (m_asmString[i] == '`' && i + 1 < m_asmString.size())
+		{
+			if (m_asmString[i + 1] == 'd') { result += getRegName(*di); ++di; i++; continue; }
+			if (m_asmString[i + 1] == 's') { result += getRegName(*si); ++si; i++; continue; }
+		}
+		result += m_asmString[i];
+	}
+
+	return result;
+}
 
 
 static void printVariableNames(Variables& vars)
