@@ -1,0 +1,21 @@
+# Build artefakti (Linux / g++)
+*.o
+/mavn
+
+# Visual Studio build izlaz / korisnicki fajlovi
+[Dd]ebug/
+[Rr]elease/
+x64/
+*.obj
+*.tlog
+*.pdb
+*.idb
+*.user
+*.VC.db
+
+# Referentni materijali sa vezbi (ne idu u repo)
+materijali-vezbe/
+
+# Editor / alati
+.vscode/
+.claude/
