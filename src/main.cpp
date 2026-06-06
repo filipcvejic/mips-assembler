@@ -1,6 +1,11 @@
 #include "LexicalAnalysis.h"
 #include "SyntaxAnalysis.h"
 #include "LivenessAnalysis.h"
+#include "InterferenceGraph.h"
+#include "Simplification.h"
+#include "ResourceAllocation.h"
+
+#include <stack>
 
 #include <iostream>
 #include <string>
@@ -46,6 +51,38 @@ int main(int argc, char* argv[])
 
 		// Ispis IR-a sa rezultatima analize zivotnog veka (in/out).
 		syntax.printIR();
+
+		// --- Alokacija registara (graf smetnji + simplifikacija + bojenje) ---
+		Variables& regVars = syntax.getRegisterVariableList();
+		InterferenceGraph* ig = doInterferenceGraph(syntax.getInstructions(), regVars);
+		printInterferenceGraph(ig);
+
+		std::stack<Variable*>* simplificationStack = doSimplification(ig, __REG_NUMBER__);
+
+		if (simplificationStack == nullptr)
+		{
+			std::cout << "\nSpill detected! Program zahteva vise od " << __REG_NUMBER__
+			          << " istovremeno zivih registara (alokacija sa t0-t3 nije moguca)." << std::endl;
+		}
+		else if (!doResourceAllocation(simplificationStack, ig))
+		{
+			std::cout << "\nActual spill! Bojenje nije uspelo." << std::endl;
+			delete simplificationStack;
+		}
+		else if (!checkResourceAllocation(ig))
+		{
+			std::cout << "\nGreska: alokacija nije korektna (dve promenljive u smetnji dele registar)." << std::endl;
+			delete simplificationStack;
+		}
+		else
+		{
+			std::cout << "\n--- Dodela registara (uspesno) ---" << std::endl;
+			for (Variables::iterator v = regVars.begin(); v != regVars.end(); v++)
+				std::cout << "  " << (*v)->getName() << " -> $t" << ((*v)->getAssignment() - t0) << std::endl;
+			delete simplificationStack;
+		}
+
+		freeInterferenceGraph(ig);
 	}
 	catch (runtime_error& e)
 	{

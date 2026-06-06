@@ -87,6 +87,7 @@ Variable* SyntaxAnalysis::getOrCreateReg(const std::string& name)
 	// pozicija = redni broj promenljive (indeks u matrici smetnji, kasnije)
 	Variable* v = new Variable(Variable::REG_VAR, name, (int)regVariables.size());
 	regVariables[name] = v;
+	registerVariables.push_back(v);
 	return v;
 }
 

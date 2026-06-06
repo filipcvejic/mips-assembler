@@ -44,6 +44,7 @@ public:
 	Instructions& getInstructions()                         { return instructions; }
 	Variables& getMemoryVariables()                         { return memoryVariables; }
 	std::map<std::string, Variable*>& getRegVariables()     { return regVariables; }
+	Variables& getRegisterVariableList()                    { return registerVariables; }
 	std::map<std::string, Instruction*>& getLabels()        { return labels; }
 	std::string getFunctionName() const                     { return functionName; }
 
@@ -90,6 +91,7 @@ private:
 	/* --- IR --- */
 	Instructions instructions;                          ///< lista instrukcija (redosled = tok programa)
 	std::map<std::string, Variable*> regVariables;      ///< registarske promenljive po imenu (deljeni pokazivaci)
+	Variables registerVariables;                        ///< iste reg. promenljive kao lista (redosled = pozicija = indeks u grafu smetnji)
 	Variables memoryVariables;                          ///< memorijske promenljive (_mem) za .data
 	std::map<std::string, Instruction*> labels;         ///< labela -> instrukcija na koju pokazuje
 	std::string functionName;                           ///< ime funkcije (_func) za .globl i labelu
