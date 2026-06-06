@@ -1,4 +1,5 @@
 #include "LexicalAnalysis.h"
+#include "SyntaxAnalysis.h"
 
 #include <iostream>
 #include <string>
@@ -15,6 +16,7 @@ int main(int argc, char* argv[])
 		// koristimo podrazumevani primer (po preporuci postavke: simple.mavn).
 		string inputFileName = (argc > 1) ? argv[1] : "examples/simple.mavn";
 
+		// --- Leksicka analiza ---
 		LexicalAnalysis lex;
 
 		if (!lex.readInputFile(inputFileName))
@@ -22,16 +24,20 @@ int main(int argc, char* argv[])
 
 		lex.initialize();
 
-		if (lex.Do())
-		{
-			cout << "Lexical analysis finished successfully!" << endl;
-			lex.printTokens();
-		}
-		else
+		if (!lex.Do())
 		{
 			lex.printLexError();
 			throw runtime_error("\nException! Lexical analysis failed!\n");
 		}
+		cout << "Lexical analysis finished successfully!" << endl;
+
+		// --- Sintaksna analiza ---
+		SyntaxAnalysis syntax(lex);
+
+		if (!syntax.Do())
+			throw runtime_error("\nException! Syntax analysis failed!\n");
+
+		cout << "Syntax analysis finished successfully!" << endl;
 	}
 	catch (runtime_error& e)
 	{
