@@ -46,6 +46,10 @@ void printInstruction(Instruction* instr)
 	printVariableNames(instr->getDef());
 	cout << " USE=";
 	printVariableNames(instr->getUse());
+	cout << "  IN=";
+	printVariableNames(instr->getIn());
+	cout << " OUT=";
+	printVariableNames(instr->getOut());
 	cout << "  SUCC=";
 	printInstrPositions(instr->getSucc());
 	cout << " PRED=";

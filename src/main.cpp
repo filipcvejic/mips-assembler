@@ -1,5 +1,6 @@
 #include "LexicalAnalysis.h"
 #include "SyntaxAnalysis.h"
+#include "LivenessAnalysis.h"
 
 #include <iostream>
 #include <string>
@@ -39,7 +40,11 @@ int main(int argc, char* argv[])
 
 		cout << "Syntax analysis finished successfully!" << endl;
 
-		// Ispis izgradjenog IR-a (provera).
+		// --- Analiza zivotnog veka ---
+		doLivenessAnalysis(syntax.getInstructions());
+		cout << "Liveness analysis finished." << endl;
+
+		// Ispis IR-a sa rezultatima analize zivotnog veka (in/out).
 		syntax.printIR();
 	}
 	catch (runtime_error& e)
