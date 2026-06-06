@@ -72,6 +72,8 @@ private:
 	void emit(InstructionType type, const std::string& asmTemplate,
 	          const std::vector<std::string>& dstNames,
 	          const std::vector<std::string>& srcNames);
+	/** Postavlja succ/pred veze (CFG), ukljucujuci ciljeve skokova (b/bltz -> labela). */
+	void buildControlFlowGraph();
 
 	/** Referenca na modul leksicke analize. */
 	LexicalAnalysis& lexicalAnalysis;
@@ -92,4 +94,5 @@ private:
 	std::map<std::string, Instruction*> labels;         ///< labela -> instrukcija na koju pokazuje
 	std::string functionName;                           ///< ime funkcije (_func) za .globl i labelu
 	std::string pendingLabel;                           ///< labela koja ceka da se zakaci na sledecu instrukciju
+	std::map<Instruction*, std::string> branchTargets;  ///< instrukcija skoka -> ime ciljne labele (za CFG)
 };

@@ -14,6 +14,15 @@ static void printVariableNames(Variables& vars)
 }
 
 
+static void printInstrPositions(std::list<Instruction*>& instrs)
+{
+	cout << "[";
+	for (std::list<Instruction*>::iterator it = instrs.begin(); it != instrs.end(); it++)
+		cout << (*it)->getPosition() << " ";
+	cout << "]";
+}
+
+
 void printVariable(Variable* v)
 {
 	if (v == nullptr)
@@ -37,6 +46,10 @@ void printInstruction(Instruction* instr)
 	printVariableNames(instr->getDef());
 	cout << " USE=";
 	printVariableNames(instr->getUse());
+	cout << "  SUCC=";
+	printInstrPositions(instr->getSucc());
+	cout << " PRED=";
+	printInstrPositions(instr->getPred());
 	cout << endl;
 }
 

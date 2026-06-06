@@ -28,6 +28,10 @@ bool SyntaxAnalysis::Do()
 		errorFound = true;
 	}
 
+	// Kada je program sintaksno ispravan, izgradi graf toka kontrole (CFG).
+	if (!errorFound)
+		buildControlFlowGraph();
+
 	return !errorFound;
 }
 
@@ -127,6 +131,58 @@ void SyntaxAnalysis::emit(InstructionType type, const std::string& asmTemplate,
 	}
 
 	instructions.push_back(instr);
+}
+
+
+void SyntaxAnalysis::buildControlFlowGraph()
+{
+	for (Instructions::iterator it = instructions.begin(); it != instructions.end(); it++)
+	{
+		Instruction* cur = *it;
+
+		Instructions::iterator nextIt = it;
+		nextIt++;
+		Instruction* fallThrough = (nextIt != instructions.end()) ? *nextIt : nullptr;
+
+		InstructionType type = cur->getType();
+
+		if (type == I_B || type == I_BLTZ)
+		{
+			// Ciljna labela ovog skoka.
+			std::map<Instruction*, std::string>::iterator bt = branchTargets.find(cur);
+			if (bt == branchTargets.end())
+				continue;
+
+			std::map<std::string, Instruction*>::iterator lab = labels.find(bt->second);
+			if (lab == labels.end())
+			{
+				cout << "Semantic error! Undefined label: \"" << bt->second << "\"" << endl;
+				errorFound = true;
+				return;
+			}
+			Instruction* target = lab->second;
+
+			// Uslovni skok (bltz): moguc prelaz i na sledecu instrukciju (fall-through) i na cilj.
+			// Bezuslovni skok (b): kontrola nikada ne "propada" na sledecu instrukciju, samo cilj.
+			if (type == I_BLTZ && fallThrough != nullptr)
+			{
+				cur->getSucc().push_back(fallThrough);
+				fallThrough->getPred().push_back(cur);
+			}
+
+			cur->getSucc().push_back(target);
+			target->getPred().push_back(cur);
+		}
+		else
+		{
+			// Sve ostale instrukcije: prelaz na sledecu instrukciju (ako postoji).
+			if (fallThrough != nullptr)
+			{
+				cur->getSucc().push_back(fallThrough);
+				fallThrough->getPred().push_back(cur);
+			}
+		}
+	}
 }
 
 
@@ -297,6 +353,8 @@ void SyntaxAnalysis::E()
 		eat(T_B);
 		string lbl = currentToken.getValue(); eat(T_ID);
 		emit(I_B, "b " + lbl, { }, { });
+		if (!errorFound)
+			branchTargets[instructions.back()] = lbl;
 		break;
 	}
 
@@ -306,6 +364,8 @@ void SyntaxAnalysis::E()
 		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string lbl = currentToken.getValue(); eat(T_ID);
 		emit(I_BLTZ, "bltz `s, " + lbl, { }, { s });
+		if (!errorFound)
+			branchTargets[instructions.back()] = lbl;
 		break;
 	}
 
