@@ -5,7 +5,6 @@
 #include "IR.h"
 
 #include <map>
-#include <vector>
 #include <string>
 
 /**
@@ -77,10 +76,10 @@ private:
 	Variable* getOrCreateReg(const std::string& name);
 	/** Dodaje memorijsku promenljivu (_mem) sa pocetnom vrednoscu. */
 	void addMemoryVariable(const std::string& name, int value);
-	/** Kreira instrukciju i puni dst/src (=def/use) iz imena registara. */
+	/** Kreira instrukciju i puni dst/src (=def/use) iz datih registara (do 1 dst + do 2 src),
+	    po uzoru na makeInstruction iz vezbe 9 (nullptr = operand kojeg nema). */
 	void emit(InstructionType type, const std::string& asmTemplate,
-	          const std::vector<std::string>& dstNames,
-	          const std::vector<std::string>& srcNames);
+	          Variable* dst = nullptr, Variable* src1 = nullptr, Variable* src2 = nullptr);
 	/** Postavlja succ/pred veze (CFG), ukljucujuci ciljeve skokova (b/bltz -> labela). */
 	void buildControlFlowGraph();
 

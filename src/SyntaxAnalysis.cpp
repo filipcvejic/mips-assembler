@@ -115,28 +115,30 @@ void SyntaxAnalysis::addMemoryVariable(const std::string& name, int value)
 
 
 void SyntaxAnalysis::emit(InstructionType type, const std::string& asmTemplate,
-                          const std::vector<std::string>& dstNames,
-                          const std::vector<std::string>& srcNames)
+                          Variable* dst, Variable* src1, Variable* src2)
 {
 	if (errorFound)
 		return;
 
 	Instruction* instr = new Instruction((int)instructions.size() + 1, type, asmTemplate);
 
-	// dst registri (ujedno def skup za liveness)
-	for (size_t i = 0; i < dstNames.size(); i++)
+	// dst -> dst lista (za generisanje koda) i def skup (za liveness)
+	if (dst != nullptr)
 	{
-		Variable* v = getOrCreateReg(dstNames[i]);
-		instr->getDst().push_back(v);
-		instr->getDef().push_back(v);
+		instr->getDst().push_back(dst);
+		instr->getDef().push_back(dst);
 	}
 
-	// src registri (ujedno use skup za liveness)
-	for (size_t i = 0; i < srcNames.size(); i++)
+	// src1/src2 -> src lista (za generisanje koda) i use skup (za liveness)
+	if (src1 != nullptr)
 	{
-		Variable* v = getOrCreateReg(srcNames[i]);
-		instr->getSrc().push_back(v);
-		instr->getUse().push_back(v);
+		instr->getSrc().push_back(src1);
+		instr->getUse().push_back(src1);
+	}
+	if (src2 != nullptr)
+	{
+		instr->getSrc().push_back(src2);
+		instr->getUse().push_back(src2);
 	}
 
 	// labela koja je prethodila ovoj instrukciji (S -> id : E)
@@ -307,7 +309,8 @@ void SyntaxAnalysis::E()
 		string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string s2 = currentToken.getValue(); eat(T_R_ID);
-		emit(I_ADD, "add `d, `s, `s", { d }, { s1, s2 });
+		if (!errorFound)
+			emit(I_ADD, "add `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
 		break;
 	}
 
@@ -317,7 +320,8 @@ void SyntaxAnalysis::E()
 		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string imm = currentToken.getValue(); eat(T_NUM);
-		emit(I_ADDI, "addi `d, `s, " + imm, { d }, { s });
+		if (!errorFound)
+			emit(I_ADDI, "addi `d, `s, " + imm, getOrCreateReg(d), getOrCreateReg(s));
 		break;
 	}
 
@@ -327,7 +331,8 @@ void SyntaxAnalysis::E()
 		string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string s2 = currentToken.getValue(); eat(T_R_ID);
-		emit(I_SUB, "sub `d, `s, `s", { d }, { s1, s2 });
+		if (!errorFound)
+			emit(I_SUB, "sub `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
 		break;
 	}
 
@@ -336,7 +341,8 @@ void SyntaxAnalysis::E()
 		eat(T_LA);
 		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string mid = currentToken.getValue(); eat(T_M_ID);
-		emit(I_LA, "la `d, " + mid, { d }, { });
+		if (!errorFound)
+			emit(I_LA, "la `d, " + mid, getOrCreateReg(d));
 		break;
 	}
 
@@ -348,7 +354,8 @@ void SyntaxAnalysis::E()
 		eat(T_L_PARENT);
 		string base = currentToken.getValue(); eat(T_R_ID);
 		eat(T_R_PARENT);
-		emit(I_LW, "lw `d, " + off + "(`s)", { d }, { base });
+		if (!errorFound)
+			emit(I_LW, "lw `d, " + off + "(`s)", getOrCreateReg(d), getOrCreateReg(base));
 		break;
 	}
 
@@ -357,7 +364,8 @@ void SyntaxAnalysis::E()
 		eat(T_LI);
 		string d   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string imm = currentToken.getValue(); eat(T_NUM);
-		emit(I_LI, "li `d, " + imm, { d }, { });
+		if (!errorFound)
+			emit(I_LI, "li `d, " + imm, getOrCreateReg(d));
 		break;
 	}
 
@@ -369,7 +377,8 @@ void SyntaxAnalysis::E()
 		eat(T_L_PARENT);
 		string base = currentToken.getValue(); eat(T_R_ID);
 		eat(T_R_PARENT);
-		emit(I_SW, "sw `s, " + off + "(`s)", { }, { s, base });
+		if (!errorFound)
+			emit(I_SW, "sw `s, " + off + "(`s)", nullptr, getOrCreateReg(s), getOrCreateReg(base));
 		break;
 	}
 
@@ -377,9 +386,11 @@ void SyntaxAnalysis::E()
 	{
 		eat(T_B);
 		string lbl = currentToken.getValue(); eat(T_ID);
-		emit(I_B, "b " + lbl, { }, { });
 		if (!errorFound)
+		{
+			emit(I_B, "b " + lbl);
 			branchTargets[instructions.back()] = lbl;
+		}
 		break;
 	}
 
@@ -388,15 +399,17 @@ void SyntaxAnalysis::E()
 		eat(T_BLTZ);
 		string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 		string lbl = currentToken.getValue(); eat(T_ID);
-		emit(I_BLTZ, "bltz `s, " + lbl, { }, { s });
 		if (!errorFound)
+		{
+			emit(I_BLTZ, "bltz `s, " + lbl, nullptr, getOrCreateReg(s));
 			branchTargets[instructions.back()] = lbl;
+		}
 		break;
 	}
 
 	case T_NOP:		// nop
 		eat(T_NOP);
-		emit(I_NOP, "nop", { }, { });
+		emit(I_NOP, "nop");
 		break;
 
 	case T_ID:		// dodatne instrukcije (mnemonik leksiran kao T_ID): and / or / bgez
@@ -409,7 +422,8 @@ void SyntaxAnalysis::E()
 			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 			string s2 = currentToken.getValue(); eat(T_R_ID);
-			emit(I_AND, "and `d, `s, `s", { d }, { s1, s2 });
+			if (!errorFound)
+				emit(I_AND, "and `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
 		}
 		else if (mnem == "or")		// or rid , rid , rid
 		{
@@ -417,16 +431,19 @@ void SyntaxAnalysis::E()
 			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 			string s2 = currentToken.getValue(); eat(T_R_ID);
-			emit(I_OR, "or `d, `s, `s", { d }, { s1, s2 });
+			if (!errorFound)
+				emit(I_OR, "or `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
 		}
 		else if (mnem == "bgez")	// bgez rid , id
 		{
 			eat(T_ID);
 			string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
 			string lbl = currentToken.getValue(); eat(T_ID);
-			emit(I_BGEZ, "bgez `s, " + lbl, { }, { s });
 			if (!errorFound)
+			{
+				emit(I_BGEZ, "bgez `s, " + lbl, nullptr, getOrCreateReg(s));
 				branchTargets[instructions.back()] = lbl;
+			}
 		}
 		else
 		{
