@@ -13,12 +13,12 @@ static bool variableExists(Variable* v, Variables& vars)
 }
 
 
-/* Normalizuje skup: sortira po poziciji promenljive i uklanja duplikate.
+/* Normalizuje skup: sortira i uklanja duplikate (kao u vezbi 9).
    Time poredjenje dve liste (da li se skup promenio) ne zavisi od redosleda. */
 static void normalize(Variables& vars)
 {
-	vars.sort([](Variable* a, Variable* b) { return a->getPosition() < b->getPosition(); });
-	vars.unique();
+	vars.sort();		// podrazumevano sortiranje liste pokazivaca - kao vezba 9
+	vars.unique();		// uklanja uzastopne duplikate (posle sortiranja: sve duplikate)
 }
 
 

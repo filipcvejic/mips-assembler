@@ -7,19 +7,22 @@ using namespace std;
    ili no_assign ako takav ne postoji (stvarni spill). */
 static Regs getColor(Variable* notColoredVariable, InterferenceGraph* ig)
 {
-	for (int color = t0; color <= t3; color++)
+	// Petlja kao u vezbi 10: probaj redom svaki od __REG_NUMBER__ registara.
+	// Pravi registar je (t0 + color), jer src/IR.h ima no_assign=0 a registre t0..t3.
+	for (int color = 0; color < __REG_NUMBER__; color++)
 	{
+		Regs reg = (Regs)(t0 + color);
 		bool colorAvailable = true;
 
 		for (Variables::iterator it = ig->variables->begin(); it != ig->variables->end(); it++)
 		{
-			Variable* neighbour = *it;
-			if (neighbour == notColoredVariable)
+			Variable* variable = *it;
+			if (variable == notColoredVariable)
 				continue;
 
 			// Sused u smetnji vec koristi ovaj registar -> nije slobodan.
-			if (neighbour->getAssignment() == (Regs)color &&
-			    ig->matrix[notColoredVariable->getPosition()][neighbour->getPosition()] == __INTERFERENCE__)
+			if (variable->getAssignment() == reg &&
+			    ig->matrix[notColoredVariable->getPosition()][variable->getPosition()] == __INTERFERENCE__)
 			{
 				colorAvailable = false;
 				break;
@@ -27,7 +30,7 @@ static Regs getColor(Variable* notColoredVariable, InterferenceGraph* ig)
 		}
 
 		if (colorAvailable)
-			return (Regs)color;
+			return reg;
 	}
 
 	return no_assign;
