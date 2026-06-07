@@ -59,47 +59,47 @@ int main(int argc, char* argv[])
 		InterferenceGraph* ig = doInterferenceGraph(syntax.getInstructions(), regVars);
 		printInterferenceGraph(ig);
 
-		std::stack<Variable*>* simplificationStack = doSimplification(ig, __REG_NUMBER__);
+		stack<Variable*>* simplificationStack = doSimplification(ig, __REG_NUMBER__);
 
 		if (simplificationStack == nullptr)
 		{
-			std::cout << "\nSpill detected! Program zahteva vise od " << __REG_NUMBER__
-			          << " istovremeno zivih registara (alokacija sa t0-t3 nije moguca)." << std::endl;
+			cout << "\nSpill detected! Program zahteva vise od " << __REG_NUMBER__
+			          << " istovremeno zivih registara (alokacija sa t0-t3 nije moguca)." << endl;
 		}
 		else if (!doResourceAllocation(simplificationStack, ig))
 		{
-			std::cout << "\nActual spill! Bojenje nije uspelo." << std::endl;
+			cout << "\nActual spill! Bojenje nije uspelo." << endl;
 			delete simplificationStack;
 		}
 		else if (!checkResourceAllocation(ig))
 		{
-			std::cout << "\nGreska: alokacija nije korektna (dve promenljive u smetnji dele registar)." << std::endl;
+			cout << "\nGreska: alokacija nije korektna (dve promenljive u smetnji dele registar)." << endl;
 			delete simplificationStack;
 		}
 		else
 		{
-			std::cout << "\n--- Dodela registara (uspesno) ---" << std::endl;
+			cout << "\n--- Dodela registara (uspesno) ---" << endl;
 			for (Variables::iterator v = regVars.begin(); v != regVars.end(); v++)
-				std::cout << "  " << (*v)->getName() << " -> $t" << ((*v)->getAssignment() - t0) << std::endl;
+				cout << "  " << (*v)->getName() << " -> $t" << ((*v)->getAssignment() - t0) << endl;
 			delete simplificationStack;
 
 			// --- Generisanje MIPS koda (.s) ---
 			// Izlazno ime: ulazna datoteka sa ekstenzijom .s
-			std::string outputFileName = inputFileName;
+			string outputFileName = inputFileName;
 			size_t dot = outputFileName.find_last_of('.');
-			if (dot != std::string::npos)
+			if (dot != string::npos)
 				outputFileName = outputFileName.substr(0, dot);
 			outputFileName += ".s";
 
-			std::string fn = syntax.getFunctionName();
+			string fn = syntax.getFunctionName();
 
 			// Obrnuta mapa: instrukcija -> labela koja pokazuje na nju.
-			std::map<Instruction*, std::string> labelOf;
-			std::map<std::string, Instruction*>& labels = syntax.getLabels();
-			for (std::map<std::string, Instruction*>::iterator it = labels.begin(); it != labels.end(); it++)
+			map<Instruction*, string> labelOf;
+			map<string, Instruction*>& labels = syntax.getLabels();
+			for (map<string, Instruction*>::iterator it = labels.begin(); it != labels.end(); it++)
 				labelOf[it->second] = it->first;
 
-			std::ofstream out(outputFileName.c_str());
+			ofstream out(outputFileName.c_str());
 
 			if (!fn.empty())
 				out << ".globl " << fn << "\n";
@@ -116,14 +116,14 @@ int main(int argc, char* argv[])
 			Instructions& instrs = syntax.getInstructions();
 			for (Instructions::iterator it = instrs.begin(); it != instrs.end(); it++)
 			{
-				std::map<Instruction*, std::string>::iterator l = labelOf.find(*it);
+				map<Instruction*, string>::iterator l = labelOf.find(*it);
 				if (l != labelOf.end())
 					out << l->second << ":\n";
 				out << "\t" << (*it)->toString() << "\n";
 			}
 
 			out.close();
-			std::cout << "MIPS izlaz generisan: " << outputFileName << std::endl;
+			cout << "MIPS izlaz generisan: " << outputFileName << endl;
 		}
 
 		freeInterferenceGraph(ig);
