@@ -78,15 +78,26 @@
   <ItemGroup>
     <ClInclude Include="Constants.h" />
     <ClInclude Include="FiniteStateMachine.h" />
+    <ClInclude Include="InterferenceGraph.h" />
     <ClInclude Include="IR.h" />
     <ClInclude Include="LexicalAnalysis.h" />
+    <ClInclude Include="LivenessAnalysis.h" />
+    <ClInclude Include="ResourceAllocation.h" />
+    <ClInclude Include="Simplification.h" />
+    <ClInclude Include="SyntaxAnalysis.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FiniteStateMachine.cpp" />
+    <ClCompile Include="InterferenceGraph.cpp" />
+    <ClCompile Include="IR.cpp" />
     <ClCompile Include="LexicalAnalysis.cpp" />
+    <ClCompile Include="LivenessAnalysis.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ResourceAllocation.cpp" />
+    <ClCompile Include="Simplification.cpp" />
+    <ClCompile Include="SyntaxAnalysis.cpp" />
     <ClCompile Include="Token.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
