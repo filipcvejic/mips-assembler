@@ -65,7 +65,10 @@ enum InstructionType
 	I_SW,
 	I_BLTZ,
 	I_B,
-	I_NOP
+	I_NOP,
+	I_AND,		// dodatna instrukcija: logicko I (aritmeticko-logicka)
+	I_OR,		// dodatna instrukcija: logicko ILI (aritmeticko-logicka)
+	I_BGEZ		// dodatna instrukcija: skok ako je registar >= 0 (van ALU grupe)
 };
 
 /**

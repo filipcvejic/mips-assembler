@@ -25,6 +25,12 @@
  *      | b    id
  *      | bltz rid , id
  *      | nop
+ *      | and  rid , rid , rid   (dodatna instrukcija)
+ *      | or   rid , rid , rid   (dodatna instrukcija)
+ *      | bgez rid , id          (dodatna instrukcija, van ALU)
+ *
+ * Napomena: mnemonici and/or/bgez (kao i labele) leksika daje kao T_ID.
+ * U S() se labela (id : E) razlikuje od dodatne instrukcije pogledom na sledeci token.
  */
 class SyntaxAnalysis
 {
@@ -58,6 +64,8 @@ private:
 	void printSyntaxError(Token token);
 	void eat(TokenType t);
 	Token getNextToken();
+	/** Vraca tip sledeceg (ne-komentar) tokena bez konzumiranja - za razlikovanje labele od instrukcije. */
+	TokenType peekNextTokenType();
 
 	void Q();
 	void S();

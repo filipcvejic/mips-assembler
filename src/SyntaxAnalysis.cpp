@@ -59,6 +59,21 @@ Token SyntaxAnalysis::getNextToken()
 }
 
 
+TokenType SyntaxAnalysis::peekNextTokenType()
+{
+	TokenList& tokens = lexicalAnalysis.getTokenList();
+
+	// tokenIterator vec pokazuje na token IZA tekuceg; preskacemo komentare.
+	for (TokenList::iterator it = tokenIterator; it != tokens.end(); it++)
+	{
+		if (it->getType() == T_COMMENT)
+			continue;
+		return it->getType();
+	}
+	return T_END_OF_FILE;
+}
+
+
 void SyntaxAnalysis::eat(TokenType t)
 {
 	if (errorFound)
@@ -147,7 +162,7 @@ void SyntaxAnalysis::buildControlFlowGraph()
 
 		InstructionType type = cur->getType();
 
-		if (type == I_B || type == I_BLTZ)
+		if (type == I_B || type == I_BLTZ || type == I_BGEZ)
 		{
 			// Ciljna labela ovog skoka.
 			std::map<Instruction*, std::string>::iterator bt = branchTargets.find(cur);
@@ -163,9 +178,9 @@ void SyntaxAnalysis::buildControlFlowGraph()
 			}
 			Instruction* target = lab->second;
 
-			// Uslovni skok (bltz): moguc prelaz i na sledecu instrukciju (fall-through) i na cilj.
+			// Uslovni skok (bltz/bgez): moguc prelaz i na sledecu instrukciju (fall-through) i na cilj.
 			// Bezuslovni skok (b): kontrola nikada ne "propada" na sledecu instrukciju, samo cilj.
-			if (type == I_BLTZ && fallThrough != nullptr)
+			if ((type == I_BLTZ || type == I_BGEZ) && fallThrough != nullptr)
 			{
 				cur->getSucc().push_back(fallThrough);
 				fallThrough->getPred().push_back(cur);
@@ -252,13 +267,22 @@ void SyntaxAnalysis::S()
 		break;
 	}
 
-	case T_ID:		// id : E  (labela ispred instrukcije)
+	case T_ID:
 	{
-		string lbl = currentToken.getValue(); eat(T_ID);
-		eat(T_COL);
-		if (!errorFound)
-			pendingLabel = lbl;
-		E();
+		// T_ID moze biti labela (id : E) ili mnemonik dodatne instrukcije (and/or/bgez).
+		// Razlikujemo ih pogledom na sledeci token: ako sledi ':' -> labela, inace -> instrukcija.
+		if (peekNextTokenType() == T_COL)
+		{
+			string lbl = currentToken.getValue(); eat(T_ID);
+			eat(T_COL);
+			if (!errorFound)
+				pendingLabel = lbl;
+			E();
+		}
+		else
+		{
+			E();
+		}
 		break;
 	}
 
@@ -374,6 +398,43 @@ void SyntaxAnalysis::E()
 		eat(T_NOP);
 		emit(I_NOP, "nop", { }, { });
 		break;
+
+	case T_ID:		// dodatne instrukcije (mnemonik leksiran kao T_ID): and / or / bgez
+	{
+		string mnem = currentToken.getValue();
+
+		if (mnem == "and")			// and rid , rid , rid
+		{
+			eat(T_ID);
+			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+			string s2 = currentToken.getValue(); eat(T_R_ID);
+			emit(I_AND, "and `d, `s, `s", { d }, { s1, s2 });
+		}
+		else if (mnem == "or")		// or rid , rid , rid
+		{
+			eat(T_ID);
+			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+			string s2 = currentToken.getValue(); eat(T_R_ID);
+			emit(I_OR, "or `d, `s, `s", { d }, { s1, s2 });
+		}
+		else if (mnem == "bgez")	// bgez rid , id
+		{
+			eat(T_ID);
+			string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+			string lbl = currentToken.getValue(); eat(T_ID);
+			emit(I_BGEZ, "bgez `s, " + lbl, { }, { s });
+			if (!errorFound)
+				branchTargets[instructions.back()] = lbl;
+		}
+		else
+		{
+			printSyntaxError(currentToken);
+			errorFound = true;
+		}
+		break;
+	}
 
 	default:
 		printSyntaxError(currentToken);
