@@ -1,0 +1,5 @@
+_reg r1;
+_reg r2;
+
+_func main;
+	add		r1, r2;

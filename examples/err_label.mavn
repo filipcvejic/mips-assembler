@@ -1,0 +1,5 @@
+_reg r1;
+
+_func main;
+	bltz	r1, nepostoji;
+	nop;

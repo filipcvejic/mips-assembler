@@ -1,0 +1,4 @@
+_reg r1;
+
+_func main;
+	li		r1, @;

@@ -1,0 +1,16 @@
+_mem m1 5;
+
+_reg r1;
+_reg r2;
+
+_func main;
+	la		r1, m1;
+	lw		r1, 0(r1);
+	li		r2, 0;
+petlja:
+	addi	r2, r2, 1;
+	sub		r1, r1, r2;
+	bltz	r1, kraj;
+	b		petlja;
+kraj:
+	nop;

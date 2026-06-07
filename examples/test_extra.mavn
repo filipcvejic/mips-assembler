@@ -1,0 +1,18 @@
+_mem m1 12;
+_mem m2 10;
+
+_reg r1;
+_reg r2;
+_reg r3;
+
+_func main;
+	la		r1, m1;
+	lw		r1, 0(r1);
+	la		r2, m2;
+	lw		r2, 0(r2);
+	and		r3, r1, r2;
+	or		r3, r3, r1;
+	bgez	r3, kraj;
+	addi	r3, r3, 1;
+kraj:
+	nop;

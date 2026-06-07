@@ -1,0 +1,17 @@
+_mem m1 8;
+_mem m2 3;
+
+_reg r1;
+_reg r2;
+_reg r3;
+
+_func main;
+	la		r1, m1;
+	lw		r1, 0(r1);
+	li		r2, 5;
+	add		r3, r1, r2;
+	sub		r3, r3, r2;
+	addi	r3, r3, 10;
+	la		r2, m2;
+	sw		r3, 0(r2);
+	nop;
