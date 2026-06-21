@@ -22,3 +22,20 @@ materijali-vezbe/
 # Editor / alati
 .vscode/
 .claude/
+
+# Dokumentacija - alati i referentni fajlovi (ne idu u predaju)
+doc/gen_*.py
+doc/slike/
+doc/.~lock.*#
+doc/primer_dobre_dokumentacije.*
+doc/drugarova-dokumentacija.*
+doc/sadrzaj-radi.docx
+doc/projekat.pdf
+doc/MIPS-instructions.pdf
+
+# Postavka i beleske (ne idu u predaju)
+/dodatno-uputstvo.txt
+potencijalna-pitanja-za-odbranu-projekta/
+
+# Linux build (predaja je Windows / Visual Studio)
+/Makefile

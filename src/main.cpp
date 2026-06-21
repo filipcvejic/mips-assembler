@@ -19,9 +19,8 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		// Ogranicavamo se na jednu ulaznu datoteku (.mavn).
-		// Putanju uzimamo iz argumenta komandne linije; ako nije data,
-		// koristimo podrazumevani primer (po preporuci postavke: simple.mavn).
+		// Ulazna datoteka (.mavn) iz argumenta komandne linije; ako nije data,
+		// koristi se podrazumevani primer.
 		string inputFileName = (argc > 1) ? argv[1] : "examples/simple.mavn";
 
 		// --- Leksicka analiza ---

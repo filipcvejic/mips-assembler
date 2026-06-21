@@ -5,7 +5,7 @@
 #include <stack>
 
 /**
- * Dodela registara (bojenje grafa), po uzoru na vezbu 10.
+ * Dodela registara (bojenje grafa).
  * Skida promenljive sa steka simplifikacije i svakoj dodeljuje prvi slobodan
  * registar (t0..t3) koji ne koristi nijedan sused u smetnji.
  *

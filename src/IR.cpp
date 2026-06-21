@@ -13,8 +13,7 @@ static string getRegName(Variable* v)
 }
 
 
-/* Popunjava sablon instrukcije: `d -> dst registri redom, `s -> src registri redom.
-   Po uzoru na vezbu 8 (Instruction.cpp / format). */
+/* Popunjava sablon instrukcije: `d -> dst registri redom, `s -> src registri redom. */
 string Instruction::toString()
 {
 	string result;

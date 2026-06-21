@@ -3,7 +3,7 @@
 #include "IR.h"
 
 /**
- * Analiza zivotnog veka promenljivih (po uzoru na vezbu 9).
+ * Analiza zivotnog veka promenljivih.
  *
  * Iterativno, unazad, do fiksne tacke:
  *   out[i] = U  in[s]   za svako s iz succ(i)

@@ -66,7 +66,7 @@ public:
 	std::string getAsmString() const { return m_asmString; }
 	void setAsmString(const std::string& s) { m_asmString = s; }
 
-	/* Popunjava `d/`s sablon stvarnim registrima iz dst/src (po uzoru na vezbu 8). */
+	/* Popunjava `d/`s sablon stvarnim registrima iz dst/src. */
 	std::string toString();
 
 	Variables& getDst() { return m_dst; }
@@ -82,7 +82,7 @@ private:
 	int m_position;
 	InstructionType m_type;
 
-	std::string m_asmString;   // sablon: `d (dst) i `s (src), po uzoru na vezbu 8
+	std::string m_asmString;   // sablon: `d (dst) i `s (src)
 
 	Variables m_dst;
 	Variables m_src;
@@ -102,7 +102,7 @@ private:
 typedef std::list<Instruction*> Instructions;
 
 
-/* Pomocne funkcije za ispis IR-a (po uzoru na Variable.cpp / Instruction.cpp sa vezbi). */
+/* Pomocne funkcije za ispis IR-a. */
 void printVariable(Variable* v);
 void printInstruction(Instruction* instr);
 void printInstructions(Instructions& instrs);

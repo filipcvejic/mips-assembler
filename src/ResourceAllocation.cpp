@@ -7,7 +7,7 @@ using namespace std;
    ili no_assign ako takav ne postoji (stvarni spill). */
 static Regs getColor(Variable* notColoredVariable, InterferenceGraph* ig)
 {
-	// Petlja kao u vezbi 10: probaj redom svaki od __REG_NUMBER__ registara.
+	// Probaj redom svaki od __REG_NUMBER__ registara.
 	// Pravi registar je (t0 + color), jer src/IR.h ima no_assign=0 a registre t0..t3.
 	for (int color = 0; color < __REG_NUMBER__; color++)
 	{

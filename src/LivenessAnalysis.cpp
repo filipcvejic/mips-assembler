@@ -13,12 +13,12 @@ static bool variableExists(Variable* v, Variables& vars)
 }
 
 
-/* Normalizuje skup: sortira i uklanja duplikate (kao u vezbi 9).
-   Time poredjenje dve liste (da li se skup promenio) ne zavisi od redosleda. */
+/* Normalizuje skup: sortira i uklanja duplikate, da poredjenje dve liste
+   (da li se skup promenio) ne zavisi od redosleda. */
 static void normalize(Variables& vars)
 {
-	vars.sort();		// podrazumevano sortiranje liste pokazivaca - kao vezba 9
-	vars.unique();		// uklanja uzastopne duplikate (posle sortiranja: sve duplikate)
+	vars.sort();
+	vars.unique();
 }
 
 
@@ -26,7 +26,7 @@ void doLivenessAnalysis(Instructions& instructions)
 {
 	bool changed = true;
 
-	// Ponavljamo prolaze dok se BILO KOJI in/out skup menja (korektna fiksna tacka).
+	// Ponavljamo prolaze dok se neki in/out skup menja (do fiksne tacke).
 	while (changed)
 	{
 		changed = false;

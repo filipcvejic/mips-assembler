@@ -3,7 +3,7 @@
 #include "IR.h"
 
 /**
- * Graf smetnji (interference graph), po uzoru na vezbu 10.
+ * Graf smetnji (interference graph).
  * Cvorovi su registarske promenljive; ivica = dve promenljive su istovremeno
  * zive i ne smeju dobiti isti registar.
  *

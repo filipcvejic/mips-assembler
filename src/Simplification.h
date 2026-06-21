@@ -5,7 +5,7 @@
 #include <stack>
 
 /**
- * Simplifikacija grafa smetnji (po uzoru na vezbu 10).
+ * Simplifikacija grafa smetnji.
  * Iterativno skida cvor stepena manjeg od 'degree' i stavlja ga na stek.
  *
  * @param ig graf smetnji
