@@ -39,3 +39,6 @@ potencijalna-pitanja-za-odbranu-projekta/
 
 # Linux build (predaja je Windows / Visual Studio)
 /Makefile
+
+# Lokalno uputstvo (ne ide u predaju)
+/README.md
