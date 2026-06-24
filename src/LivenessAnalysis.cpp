@@ -3,7 +3,6 @@
 using namespace std;
 
 
-/* Da li promenljiva v postoji u listi vars (poredjenje po pokazivacu - deljeni objekti). */
 static bool variableExists(Variable* v, Variables& vars)
 {
 	for (Variables::iterator it = vars.begin(); it != vars.end(); it++)
@@ -13,8 +12,6 @@ static bool variableExists(Variable* v, Variables& vars)
 }
 
 
-/* Normalizuje skup: sortira i uklanja duplikate, da poredjenje dve liste
-   (da li se skup promenio) ne zavisi od redosleda. */
 static void normalize(Variables& vars)
 {
 	vars.sort();
@@ -26,12 +23,10 @@ void doLivenessAnalysis(Instructions& instructions)
 {
 	bool changed = true;
 
-	// Ponavljamo prolaze dok se neki in/out skup menja (do fiksne tacke).
 	while (changed)
 	{
 		changed = false;
 
-		// Unazad: od poslednje ka prvoj instrukciji.
 		for (Instructions::reverse_iterator rit = instructions.rbegin(); rit != instructions.rend(); rit++)
 		{
 			Instruction* instr = *rit;
@@ -39,7 +34,7 @@ void doLivenessAnalysis(Instructions& instructions)
 			Variables& in  = instr->getIn();
 			Variables& out = instr->getOut();
 
-			// out_new = U in[s] za svako s iz succ
+			// out = unija in skupova naslednika
 			Variables outNew;
 			for (Instructions::iterator s = instr->getSucc().begin(); s != instr->getSucc().end(); s++)
 			{
@@ -48,7 +43,7 @@ void doLivenessAnalysis(Instructions& instructions)
 			}
 			normalize(outNew);
 
-			// in_new = use U ( out_new \ def )
+			// in = use + (out - def)
 			Variables inNew = instr->getUse();
 			for (Variables::iterator o = outNew.begin(); o != outNew.end(); o++)
 			{

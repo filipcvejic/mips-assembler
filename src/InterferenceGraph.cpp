@@ -12,7 +12,6 @@ InterferenceGraph* doInterferenceGraph(Instructions& instructions, Variables& re
 	ig->variables = &registerVariables;
 	ig->size = (int)registerVariables.size();
 
-	// Alokacija i inicijalizacija matrice na __EMPTY__.
 	ig->matrix = new int*[ig->size];
 	for (int i = 0; i < ig->size; i++)
 	{
@@ -21,7 +20,6 @@ InterferenceGraph* doInterferenceGraph(Instructions& instructions, Variables& re
 			ig->matrix[i][j] = __EMPTY__;
 	}
 
-	// Za svako definisanje d, d je u smetnji sa svim promenljivima iz out[instr] (osim sebe).
 	for (Instructions::iterator it = instructions.begin(); it != instructions.end(); it++)
 	{
 		Instruction* instr = *it;

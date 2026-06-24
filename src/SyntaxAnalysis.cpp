@@ -18,17 +18,14 @@ bool SyntaxAnalysis::Do()
 {
 	currentToken = getNextToken();
 
-	// Pocetni neterminal gramatike.
 	Q();
 
-	// Nakon korektnog programa moramo stici tacno do kraja ulaza (eof).
 	if (!errorFound && currentToken.getType() != T_END_OF_FILE)
 	{
 		printSyntaxError(currentToken);
 		errorFound = true;
 	}
 
-	// Kada je program sintaksno ispravan, izgradi graf toka kontrole (CFG).
 	if (!errorFound)
 		buildControlFlowGraph();
 
@@ -46,7 +43,6 @@ Token SyntaxAnalysis::getNextToken()
 {
 	TokenList& tokens = lexicalAnalysis.getTokenList();
 
-	// Komentari nisu deo gramatike - preskacemo ih.
 	while (tokenIterator != tokens.end())
 	{
 		Token t = *tokenIterator++;
@@ -63,7 +59,6 @@ TokenType SyntaxAnalysis::peekNextTokenType()
 {
 	TokenList& tokens = lexicalAnalysis.getTokenList();
 
-	// tokenIterator vec pokazuje na token IZA tekuceg; preskacemo komentare.
 	for (TokenList::iterator it = tokenIterator; it != tokens.end(); it++)
 	{
 		if (it->getType() == T_COMMENT)
@@ -91,7 +86,7 @@ void SyntaxAnalysis::eat(TokenType t)
 }
 
 
-/* ===================== Izgradnja IR-a ===================== */
+/* IR */
 
 Variable* SyntaxAnalysis::getOrCreateReg(const std::string& name)
 {
@@ -99,7 +94,6 @@ Variable* SyntaxAnalysis::getOrCreateReg(const std::string& name)
 	if (it != regVariables.end())
 		return it->second;
 
-	// pozicija = redni broj promenljive (indeks u matrici smetnji, kasnije)
 	Variable* v = new Variable(Variable::REG_VAR, name, (int)regVariables.size());
 	regVariables[name] = v;
 	registerVariables.push_back(v);
@@ -122,14 +116,12 @@ void SyntaxAnalysis::emit(InstructionType type, const std::string& asmTemplate,
 
 	Instruction* instr = new Instruction((int)instructions.size() + 1, type, asmTemplate);
 
-	// dst -> dst lista (za generisanje koda) i def skup (za liveness)
 	if (dst != nullptr)
 	{
 		instr->getDst().push_back(dst);
 		instr->getDef().push_back(dst);
 	}
 
-	// src1/src2 -> src lista (za generisanje koda) i use skup (za liveness)
 	if (src1 != nullptr)
 	{
 		instr->getSrc().push_back(src1);
@@ -141,7 +133,6 @@ void SyntaxAnalysis::emit(InstructionType type, const std::string& asmTemplate,
 		instr->getUse().push_back(src2);
 	}
 
-	// labela koja je prethodila ovoj instrukciji (S -> id : E)
 	if (!pendingLabel.empty())
 	{
 		labels[pendingLabel] = instr;
@@ -166,7 +157,6 @@ void SyntaxAnalysis::buildControlFlowGraph()
 
 		if (type == I_B || type == I_BLTZ || type == I_BGEZ)
 		{
-			// Ciljna labela ovog skoka.
 			std::map<Instruction*, std::string>::iterator bt = branchTargets.find(cur);
 			if (bt == branchTargets.end())
 				continue;
@@ -180,8 +170,6 @@ void SyntaxAnalysis::buildControlFlowGraph()
 			}
 			Instruction* target = lab->second;
 
-			// Uslovni skok (bltz/bgez): moguc prelaz i na sledecu instrukciju (fall-through) i na cilj.
-			// Bezuslovni skok (b): kontrola nikada ne "propada" na sledecu instrukciju, samo cilj.
 			if ((type == I_BLTZ || type == I_BGEZ) && fallThrough != nullptr)
 			{
 				cur->getSucc().push_back(fallThrough);
@@ -193,7 +181,6 @@ void SyntaxAnalysis::buildControlFlowGraph()
 		}
 		else
 		{
-			// Sve ostale instrukcije: prelaz na sledecu instrukciju (ako postoji).
 			if (fallThrough != nullptr)
 			{
 				cur->getSucc().push_back(fallThrough);
@@ -204,7 +191,7 @@ void SyntaxAnalysis::buildControlFlowGraph()
 }
 
 
-/* ===================== Gramatika ===================== */
+/* Gramatika */
 
 // Q -> S ; L
 void SyntaxAnalysis::Q()
@@ -224,11 +211,9 @@ void SyntaxAnalysis::L()
 	if (errorFound)
 		return;
 
-	// L -> eof : kraj programa, eof se ne "jede" (ostaje kao tekuci token).
 	if (currentToken.getType() == T_END_OF_FILE)
 		return;
 
-	// L -> Q
 	Q();
 }
 
@@ -256,7 +241,7 @@ void SyntaxAnalysis::S()
 		eat(T_REG);
 		string regName = currentToken.getValue(); eat(T_R_ID);
 		if (!errorFound)
-			getOrCreateReg(regName);	// deklaracija registarske promenljive
+			getOrCreateReg(regName);
 		break;
 	}
 
@@ -271,8 +256,6 @@ void SyntaxAnalysis::S()
 
 	case T_ID:
 	{
-		// T_ID moze biti labela (id : E) ili mnemonik dodatne instrukcije (and/or/bgez).
-		// Razlikujemo ih pogledom na sledeci token: ako sledi ':' -> labela, inace -> instrukcija.
 		if (peekNextTokenType() == T_COL)
 		{
 			string lbl = currentToken.getValue(); eat(T_ID);
@@ -288,14 +271,14 @@ void SyntaxAnalysis::S()
 		break;
 	}
 
-	default:		// S -> E  (instrukcija)
+	default:		// E
 		E();
 		break;
 	}
 }
 
 
-// E -> jedna od podrzanih instrukcija
+// E -> instrukcija
 void SyntaxAnalysis::E()
 {
 	if (errorFound)
@@ -412,43 +395,37 @@ void SyntaxAnalysis::E()
 		emit(I_NOP, "nop");
 		break;
 
-	case T_ID:		// dodatne instrukcije (mnemonik leksiran kao T_ID): and / or / bgez
+	case T_XOR: // xor rid , rid , rid
 	{
-		string mnem = currentToken.getValue();
+		eat(T_XOR);
+		string d = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s2 = currentToken.getValue(); eat(T_R_ID);
+		if (!errorFound)
+			emit(I_XOR, "xor `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
+		break;
+	}
 
-		if (mnem == "and")			// and rid , rid , rid
+	case T_AND: // and rid , rid , rid
+	{
+		eat(T_AND);
+		string d = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string s2 = currentToken.getValue(); eat(T_R_ID);
+		if (!errorFound)
+			emit(I_AND, "and `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
+		break;
+	}
+
+	case T_BGEZ: // bgez rid , id
+	{
+		eat(T_BGEZ);
+		string s = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
+		string lbl = currentToken.getValue(); eat(T_ID);
+		if (!errorFound)
 		{
-			eat(T_ID);
-			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
-			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
-			string s2 = currentToken.getValue(); eat(T_R_ID);
-			if (!errorFound)
-				emit(I_AND, "and `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
-		}
-		else if (mnem == "or")		// or rid , rid , rid
-		{
-			eat(T_ID);
-			string d  = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
-			string s1 = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
-			string s2 = currentToken.getValue(); eat(T_R_ID);
-			if (!errorFound)
-				emit(I_OR, "or `d, `s, `s", getOrCreateReg(d), getOrCreateReg(s1), getOrCreateReg(s2));
-		}
-		else if (mnem == "bgez")	// bgez rid , id
-		{
-			eat(T_ID);
-			string s   = currentToken.getValue(); eat(T_R_ID); eat(T_COMMA);
-			string lbl = currentToken.getValue(); eat(T_ID);
-			if (!errorFound)
-			{
-				emit(I_BGEZ, "bgez `s, " + lbl, nullptr, getOrCreateReg(s));
-				branchTargets[instructions.back()] = lbl;
-			}
-		}
-		else
-		{
-			printSyntaxError(currentToken);
-			errorFound = true;
+			emit(I_BGEZ, "bgez `s, " + lbl, nullptr, getOrCreateReg(s));
+			branchTargets[instructions.back()] = lbl;
 		}
 		break;
 	}
@@ -461,7 +438,7 @@ void SyntaxAnalysis::E()
 }
 
 
-/* ===================== Ispis IR-a ===================== */
+/* Ispis IR-a */
 
 void SyntaxAnalysis::printIR()
 {

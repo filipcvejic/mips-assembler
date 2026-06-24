@@ -35,6 +35,9 @@ enum TokenType
 	T_BLTZ,			// bltz
 	T_B,			// b
 	T_NOP,			// nop
+	T_AND, // and
+	T_BGEZ, // bgez
+	T_XOR, // xor
 
 	// operators
 	T_COMMA,		//,
@@ -66,9 +69,9 @@ enum InstructionType
 	I_BLTZ,
 	I_B,
 	I_NOP,
-	I_AND,		// dodatna instrukcija: logicko I (aritmeticko-logicka)
-	I_OR,		// dodatna instrukcija: logicko ILI (aritmeticko-logicka)
-	I_BGEZ		// dodatna instrukcija: skok ako je registar >= 0 (van ALU grupe)
+	I_AND,
+	I_BGEZ,
+	I_XOR
 };
 
 /**

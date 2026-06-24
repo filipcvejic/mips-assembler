@@ -3,12 +3,8 @@
 using namespace std;
 
 
-/* Vraca prvi registar (t0..t3) koji ne koristi nijedan sused u smetnji,
-   ili no_assign ako takav ne postoji (stvarni spill). */
 static Regs getColor(Variable* notColoredVariable, InterferenceGraph* ig)
 {
-	// Probaj redom svaki od __REG_NUMBER__ registara.
-	// Pravi registar je (t0 + color), jer src/IR.h ima no_assign=0 a registre t0..t3.
 	for (int color = 0; color < __REG_NUMBER__; color++)
 	{
 		Regs reg = (Regs)(t0 + color);
@@ -20,7 +16,6 @@ static Regs getColor(Variable* notColoredVariable, InterferenceGraph* ig)
 			if (variable == notColoredVariable)
 				continue;
 
-			// Sused u smetnji vec koristi ovaj registar -> nije slobodan.
 			if (variable->getAssignment() == reg &&
 			    ig->matrix[notColoredVariable->getPosition()][variable->getPosition()] == __INTERFERENCE__)
 			{
@@ -46,7 +41,7 @@ bool doResourceAllocation(std::stack<Variable*>* simplificationStack, Interferen
 
 		Regs color = getColor(current, ig);
 		if (color == no_assign)
-			return false;	// stvarni spill: nema slobodnog registra
+			return false;
 
 		current->setAssignment(color);
 	}

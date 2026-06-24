@@ -6,14 +6,12 @@
 using namespace std;
 
 
-/* Naziv stvarnog MIPS registra za dodeljenu boju (t0..t3). */
 static string getRegName(Variable* v)
 {
 	return "$t" + to_string((int)v->getAssignment() - (int)t0);
 }
 
 
-/* Popunjava sablon instrukcije: `d -> dst registri redom, `s -> src registri redom. */
 string Instruction::toString()
 {
 	string result;
@@ -68,7 +66,6 @@ void printInstruction(Instruction* instr)
 	if (instr == nullptr)
 		return;
 
-	// pozicija + asm sablon (jos uvek sa `d / `s, pre alokacije registara)
 	cout << "  [" << instr->getPosition() << "] " << instr->getAsmString();
 
 	cout << "   DEF=";

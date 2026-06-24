@@ -1,5 +1,6 @@
 # Build artefakti (Linux / g++)
 *.o
+*.d
 /mavn
 
 # Generisani MIPS izlaz prevodioca
@@ -29,6 +30,7 @@ doc/slike/
 doc/.~lock.*#
 doc/primer_dobre_dokumentacije.*
 doc/drugarova-dokumentacija.*
+doc/Dokumentacija-drugar.*
 doc/sadrzaj-radi.docx
 doc/projekat.pdf
 doc/MIPS-instructions.pdf
@@ -36,9 +38,7 @@ doc/MIPS-instructions.pdf
 # Postavka i beleske (ne idu u predaju)
 /dodatno-uputstvo.txt
 potencijalna-pitanja-za-odbranu-projekta/
-
-# Linux build (predaja je Windows / Visual Studio)
-/Makefile
+/priprema-odbrana/
 
 # Lokalno uputstvo (ne ide u predaju)
 /README.md

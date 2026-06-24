@@ -11,7 +11,7 @@ _func main;
 	la		r2, m2;
 	lw		r2, 0(r2);
 	and		r3, r1, r2;
-	or		r3, r3, r1;
+	xor		r3, r3, r1;
 	bgez	r3, kraj;
 	addi	r3, r3, 1;
 kraj:

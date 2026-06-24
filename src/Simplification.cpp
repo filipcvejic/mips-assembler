@@ -9,7 +9,6 @@ std::stack<Variable*>* doSimplification(InterferenceGraph* ig, int degree)
 {
 	int n = ig->size;
 
-	// Mapiranje pozicija -> promenljiva (radi vracanja Variable* na stek).
 	vector<Variable*> byPos(n, nullptr);
 	for (Variables::iterator v = ig->variables->begin(); v != ig->variables->end(); v++)
 		byPos[(*v)->getPosition()] = *v;
@@ -21,7 +20,6 @@ std::stack<Variable*>* doSimplification(InterferenceGraph* ig, int degree)
 
 	while (remaining > 0)
 	{
-		// Nadji jos neuklonjen cvor stepena < degree (broji se samo prema neuklonjenim susedima).
 		int pick = -1;
 		for (int i = 0; i < n && pick == -1; i++)
 		{
@@ -39,7 +37,6 @@ std::stack<Variable*>* doSimplification(InterferenceGraph* ig, int degree)
 
 		if (pick == -1)
 		{
-			// Nijedan cvor nema stepen < degree -> spill (vise od 'degree' istovremeno zivih).
 			delete simplificationStack;
 			return nullptr;
 		}

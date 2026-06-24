@@ -105,6 +105,9 @@ string Token::tokenTypeToString(TokenType t)
 		case T_BLTZ:			return "[T_BLTZ]";
 		case T_B:				return "[T_B]";
 		case T_NOP:				return "[T_NOP]";
+		case T_AND: return "[T_AND]";
+		case T_BGEZ: return "[T_BGEZ]";
+		case T_XOR: return "[T_XOR]";
 		case T_COMMA:			return "[T_COMMA]";
 		case T_L_PARENT:		return "[T_L_PARENT]";
 		case T_R_PARENT:		return "[T_R_PARENT]";
@@ -116,4 +119,3 @@ string Token::tokenTypeToString(TokenType t)
 		default:				return "";
 	}
 }
-

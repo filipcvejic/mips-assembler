@@ -19,11 +19,10 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		// Ulazna datoteka (.mavn) iz argumenta komandne linije; ako nije data,
-		// koristi se podrazumevani primer.
+		// Ulazni .mavn fajl.
 		string inputFileName = (argc > 1) ? argv[1] : "examples/simple.mavn";
 
-		// --- Leksicka analiza ---
+		// Leksicka analiza
 		LexicalAnalysis lex;
 
 		if (!lex.readInputFile(inputFileName))
@@ -38,7 +37,7 @@ int main(int argc, char* argv[])
 		}
 		cout << "Lexical analysis finished successfully!" << endl;
 
-		// --- Sintaksna analiza ---
+		// Sintaksna analiza
 		SyntaxAnalysis syntax(lex);
 
 		if (!syntax.Do())
@@ -46,34 +45,37 @@ int main(int argc, char* argv[])
 
 		cout << "Syntax analysis finished successfully!" << endl;
 
-		// --- Analiza zivotnog veka ---
+		// Liveness
 		doLivenessAnalysis(syntax.getInstructions());
 		cout << "Liveness analysis finished." << endl;
 
-		// Ispis IR-a sa rezultatima analize zivotnog veka (in/out).
 		syntax.printIR();
 
-		// --- Alokacija registara (graf smetnji + simplifikacija + bojenje) ---
+		// Alokacija registara
 		Variables& regVars = syntax.getRegisterVariableList();
 		InterferenceGraph* ig = doInterferenceGraph(syntax.getInstructions(), regVars);
 		printInterferenceGraph(ig);
 
 		stack<Variable*>* simplificationStack = doSimplification(ig, __REG_NUMBER__);
+		bool allocationFailed = false;
 
 		if (simplificationStack == nullptr)
 		{
 			cout << "\nSpill detected! Program zahteva vise od " << __REG_NUMBER__
 			          << " istovremeno zivih registara (alokacija sa t0-t3 nije moguca)." << endl;
+			allocationFailed = true;
 		}
 		else if (!doResourceAllocation(simplificationStack, ig))
 		{
 			cout << "\nActual spill! Bojenje nije uspelo." << endl;
 			delete simplificationStack;
+			allocationFailed = true;
 		}
 		else if (!checkResourceAllocation(ig))
 		{
 			cout << "\nGreska: alokacija nije korektna (dve promenljive u smetnji dele registar)." << endl;
 			delete simplificationStack;
+			allocationFailed = true;
 		}
 		else
 		{
@@ -82,8 +84,7 @@ int main(int argc, char* argv[])
 				cout << "  " << (*v)->getName() << " -> $t" << ((*v)->getAssignment() - t0) << endl;
 			delete simplificationStack;
 
-			// --- Generisanje MIPS koda (.s) ---
-			// Izlazno ime: ulazna datoteka sa ekstenzijom .s
+			// Generisanje .s fajla
 			string outputFileName = inputFileName;
 			size_t dot = outputFileName.find_last_of('.');
 			if (dot != string::npos)
@@ -92,7 +93,6 @@ int main(int argc, char* argv[])
 
 			string fn = syntax.getFunctionName();
 
-			// Obrnuta mapa: instrukcija -> labela koja pokazuje na nju.
 			map<Instruction*, string> labelOf;
 			map<string, Instruction*>& labels = syntax.getLabels();
 			for (map<string, Instruction*>::iterator it = labels.begin(); it != labels.end(); it++)
@@ -126,6 +126,9 @@ int main(int argc, char* argv[])
 		}
 
 		freeInterferenceGraph(ig);
+
+		if (allocationFailed)
+			return 1;
 	}
 	catch (runtime_error& e)
 	{
